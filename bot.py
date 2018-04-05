@@ -12,9 +12,12 @@ class Bot:
 			weekday = d.strftime('%A')
 			return week_days[weekday]
 
-
 	def private(self, sender, msg):
-		pass
+		response = self.public('', sender, msg)
+		if not response:
+			return "I'm hungry"
+		else:
+			return f'just between me and you {response}'
 
 week_days = {'Monday': "Have a marvelous Monday", 'Tuesday': "Have a terrific Tuesday",
 'Wednesday': 'Have a wonderful Wednesday', 'Thursday': 'Have a Thabulous Thursday', 
