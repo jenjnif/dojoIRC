@@ -7,21 +7,43 @@ class Message:
         self.command = command
         self.params = params
 
+    @classmethod
+    def parse(klass, line):
+        if line[0] == ":":
+            prefix, line = line.split(" ", 1)
+        else:
+            prefix = None
+        command, line = line.split(" ", 1)
+        params = []
+        while line:
+            if line[0] == ":" or " " not in line:
+                params.append(line[1:])
+                break
+            param, line = line.split(" ", 1)
+            params.append(param)
+        return klass(prefix, command, *params)
+
     def __str__(self):
+        parts = []
         if self.prefix:
-            return ":{} {} {}".format(
-                self.prefix, self.command, " ".join(self.params))
-        return "{} {}".format(
-            self.command, " ".join(self.params))
+            parts.append(self.prefix)
+        parts.append(str(self.command))
+        for param in self.params:
+            if " " in param:
+                parts.append(":" + param)
+            else:
+                parts.append(param)
+        return " ".join(parts)
 
 
 class Irc:
-    def __init__(self, hostname, port, nickname, username, real_name):
+    def __init__(self, hostname, port, nickname, username, real_name, channel):
         self.hostname = hostname
         self.port = port
         self.nickname = nickname
         self.username = username
         self.real_name = real_name
+        self.channel = channel
 
     def connect(self):
         self.sock = socket.create_connection((self.hostname, self.port))
@@ -29,6 +51,7 @@ class Irc:
         self.send(Message(None, "NICK", self.nickname))
         self.send(Message(None, "USER", self.username,
                           '0', "-", self.real_name))
+        self.send(Message(None, "JOIN", self.channel))
 
     def send(self, message):
         self.sock.sendall(str(message).encode("iso-8859-1") + b"\r\n")
@@ -38,15 +61,22 @@ class Irc:
             line = self.conn.readline().strip()
             if not line:
                 break
-            if line[0] == ":":
-                msg = Message(*line.split(" "))
-            else:
-                msg = Message(None, *line.split(" "))
+            msg = Message.parse(line)
             print(msg)
+            if msg.command.isalpha():
+                handler = getattr(self, "handle_" + msg.command.lower(), None)
+                if handler:
+                    handler(msg)
+
+    def handle_ping(self, msg):
+        self.send(Message(None, "PONG", msg.params))
+
+    def handle_privmsg(self, msg):
+        print("Received {!r} from {!r}".format(msg.params[1], msg.params[0]))
 
 
 if __name__ == '__main__':
     irc = Irc('irc.freenode.org', 6667, 'team2bot', 'team2bot',
-              'London Python Dojo Team 2 Bot')
+              'London Python Dojo Team 2 Bot', '#pydojo')
     irc.connect()
     irc.run()
