@@ -1,3 +1,4 @@
+import re
 import socket
 
 import bot
@@ -24,6 +25,13 @@ class Message:
             param, line = line.split(" ", 1)
             params.append(param)
         return klass(prefix, command, *params)
+
+    @property
+    def nickname(self):
+        match = re.match(r":([^@!]+)", self.prefix or "")
+        if match:
+            return match.group(1)
+        return None
 
     def __str__(self):
         parts = []
@@ -66,21 +74,26 @@ class Irc:
             if not line:
                 break
             msg = Message.parse(line)
-            print(msg)
+            print(line)
             if msg.command.isalpha():
                 handler = getattr(self, "handle_" + msg.command.lower(), None)
                 if handler:
                     handler(msg)
 
     def handle_ping(self, msg):
-        self.send(Message(None, "PONG", msg.params))
+        self.send(Message(None, "PONG", *msg.params))
 
     def handle_privmsg(self, msg):
-        print("Received {!r} from {!r}".format(msg.params[1], msg.params[0]))
-        if self.bot:
-            reply = self.bot.public("", msg.params[0], msg.params[1])
+        if not self.bot or not msg.nickname:
+            return
+        if msg.params[0].startswith("#"):
+            reply = self.bot.public("", msg.nickname, msg.params[1])
             if reply:
                 self.send(Message(None, "PRIVMSG", msg.params[0], reply))
+        elif msg.nickname:
+            reply = self.bot.public("", msg.nickname, msg.params[1])
+            if reply:
+                self.send(Message(None, "PRIVMSG", msg.nickname, reply))
 
 
 if __name__ == '__main__':
