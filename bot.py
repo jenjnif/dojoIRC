@@ -4,7 +4,7 @@ import datetime
 class Bot:
 	def public(self, channel, sender, msg):
 		if msg.lower() == 'hi':
-			return f'hello {sender}'
+			return 'hello {}'.format(sender)
 		if "joke" in msg.lower():
 			return pyjokes.get_joke()
 		if "date" in msg.lower() or "day" in msg.lower():
@@ -17,7 +17,7 @@ class Bot:
 		if not response:
 			return "I'm hungry"
 		else:
-			return f'just between me and you {response}'
+			return 'just between me and you {}'.format(response)
 
 week_days = {'Monday': "Have a marvelous Monday", 'Tuesday': "Have a terrific Tuesday",
 'Wednesday': 'Have a wonderful Wednesday', 'Thursday': 'Have a Thabulous Thursday', 
