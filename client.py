@@ -1,5 +1,7 @@
 import socket
 
+import bot
+
 
 class Message:
     def __init__(self, prefix, command, *params):
@@ -37,13 +39,15 @@ class Message:
 
 
 class Irc:
-    def __init__(self, hostname, port, nickname, username, real_name, channel):
+    def __init__(self, hostname, port, nickname, username, real_name, channel,
+                 bot=None):
         self.hostname = hostname
         self.port = port
         self.nickname = nickname
         self.username = username
         self.real_name = real_name
         self.channel = channel
+        self.bot = bot
 
     def connect(self):
         self.sock = socket.create_connection((self.hostname, self.port))
@@ -73,10 +77,14 @@ class Irc:
 
     def handle_privmsg(self, msg):
         print("Received {!r} from {!r}".format(msg.params[1], msg.params[0]))
+        if self.bot:
+            reply = self.bot.public("", msg.params[0], msg.params[1])
+            if reply:
+                self.send(Message(None, "PRIVMSG", msg.params[0], reply))
 
 
 if __name__ == '__main__':
     irc = Irc('irc.freenode.org', 6667, 'team2bot', 'team2bot',
-              'London Python Dojo Team 2 Bot', '#pydojo')
+              'London Python Dojo Team 2 Bot', '#pydojo', bot.Bot())
     irc.connect()
     irc.run()
