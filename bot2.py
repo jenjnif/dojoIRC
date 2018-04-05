@@ -26,16 +26,19 @@ week_days = {'Monday': "Have a marvelous Monday", 'Tuesday': "Have a terrific Tu
 
 def main():
 	bot = Bot()
-	msg = bot.public('ldnpydojo', 'Gautier', 'Hi')
-	if msg:
-		print(msg)
-	msg = bot.public('ldnpydojo', 'Gautier', 'tell me a joke')
-	if msg:
-		print(msg)
-	msg = bot.public('ldnpydojo', 'Gautier', 'what day is it?')
-	if msg:
-		print(msg)
+	while True:
+		try:
+			m = input('>> ')
+		except (KeyboardInterrupt, EOFError):
+			print('Bye!')
+			break
+		if not m:
+			continue
 
+		msg = bot.public('ldnpydojo', 'Gautier', m)
+		if msg:
+			print(msg)
+ 
 
 if __name__ == '__main__':
 	main()
